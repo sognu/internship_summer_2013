@@ -1,0 +1,195 @@
+<?xml version="1.0"?>
+<williams:PopupPanel xmlns="com.williams.components.*"
+                     xmlns:mx="http://www.adobe.com/2006/mxml"
+                     xmlns:service="com.williams.infrastructure.services.*"
+                     xmlns:anvil="net.sf.flexapps.anvil.*"
+                     xmlns:events="net.sf.flexapps.anvil.events.*"
+                     xmlns:williams="http://williams.com"
+                     xmlns:module="modules.infrastructure.baRequest.*"
+                     visibleButtonSave="true"
+                     visibleButtonNew="false"
+                     visibleButtonInquire="false"
+                     visibleButtonDelete="false"
+                     visibleButtonModify="false"
+                     height="650" width="1050"
+                     initialize="putBARqstIntoMenu()"
+                     modalTransparency="0.0"
+                     modalTransparencyBlur="0.0"
+                     horizontalScrollPolicy="off"
+                     verticalScrollPolicy="off"
+                     verticalAlign="top">
+
+   <mx:Script>
+
+	
+<![CDATA[
+
+       [Bindable]public var parentBARqstGrid:BARequestGrid;
+       [Bindable] public var userInfoList:ArrayCollection; /* of BARequestUserInfoDO */
+       [Bindable] public var companyInfo:BARequestCompanyInfoDO;
+       [Bindable] private var users:ArrayCollection;
+       private var btnSubmit:Button;
+
+
+
+public function get service() : InfrastructureService {
+			
+			return moduleService as InfrastructureService;
+}
+
+/* Called each time module is loaded */       
+public override function onSecuredCreationComplete():void {
+		
+	service.addEventListener(BARequestEvent.BA_REQUEST_Edit_Save.name, putBARqstIntoMenu);
+        service.addEventListener(BARequestEvent.BA_REQUEST_Edit_Submit.name, putBARqstIntoMenu);
+                
+        if(companyInfo.baRqstStatDesc != null){
+           if(companyInfo.baRqstStatDesc == 'Submitted'){
+                btnSubmit.enabled = false;
+                enableButtonSave = false;
+                visibleButtonSave = false;
+              }
+          }
+      }
+
+
+/* Handles submit events */
+public function onSubmit(event:Event):void{
+
+    if(baRqstEditCompany.validate() && baRqstEditAddress.validate() && validateUsers()){
+               var userToSendList:ArrayCollection = updateDO();
+                  save(userToSendList);
+              service.submitBARequestEdit(companyInfo,userToSendList, submitReceived);
+              }
+       }
+
+
+/* Make sure user is valid */
+public function validateUsers():Boolean{
+      
+      for each(var user:BARequestEditUserForm in users){
+               if(!user.validate()){
+                  return false;
+               }
+           }
+           return true;
+       }
+
+       
+/* Handles server response to submit */
+public function submitReceived(event:ResultEvent):void{
+
+        var coId:int = event.result as int;
+        if(coId == -1){
+            Alert.show("There was an error in submission.  Please check fields, then submit the form.");
+         }
+        else{
+           companyInfo.baRqstStatDesc = 'Submitted';
+           enableButtonSave = false;
+           btnSubmit.enabled = false;
+           Alert.show("Submitted.  New company id is "+coId);
+           }
+      }
+
+
+
+       public function onSave(event:Event):void {
+
+              if(baRqstEditCompany.validate() && baRqstEditAddress.validate() && validateUsers()){
+              var userToSendList:ArrayCollection = updateDO();
+              save(userToSendList);
+        }
+       }
+
+
+/* Update the data objects */
+private function updateDO():ArrayCollection {
+
+        baRqstEditCompany.updateDO();
+        baRqstEditAddress.updateDO();
+        var userToSendList:ArrayCollection = new ArrayCollection();
+
+        for each(var user:BARequestEditUserForm in users){
+              var  userToSend:BARequestUserInfoDO = user.updateDO();
+              userToSend.rqstId = companyInfo.rqstId;
+                if(!user.validate()){
+                 return null;
+                 }
+
+               userToSendList.addItem(userToSend);
+           }
+           return userToSendList;
+        }
+
+
+/* Save company info */
+private function save(userList:ArrayCollection){
+
+        service.saveBARequestEdit(companyInfo, userList);
+	
+ }
+
+
+/* Put request items into menu panel */
+public function putBARqstIntoMenu(event:Event=null):void {
+		
+           cleanupBARequestEditForms();
+           users = new ArrayCollection();
+           var userComponent:ArrayCollection = new ArrayCollection();
+	   var selection:String;
+           var i = 1;
+           userComponent.addItem(baRqstEditCompany);
+           userComponent.addItem(baRqstEditAddress);
+
+           for each (var user:BARequestUserInfoDO in userInfoList) {
+                  if(user.firstName || user.lastName){
+                    var nav:BARequestEditUserForm = new BARequestEditUserForm;
+					nav.user = user;
+                    nav.service = service;
+                    nav.label = "User" + "-" + i;
+					users.addItem(nav);
+                      userComponent.addItem(nav);
+                      i++;
+                    }
+                }
+		
+                baRequestEditNavPanel.subComponents = userComponent.toArray();
+            }
+
+
+/* Clean up */
+private function cleanupBARequestEditForms():void{
+
+            var nomForms:Array = baRequestEditNavPanel.subComponents;
+
+            if(nomForms){
+		for each(var obj:Object in nomForms){
+			if(obj is BARequestEditUserForm){
+				(obj as BARequestEditUserForm).onClose(null);
+				}
+			   }
+		      }
+	          }
+
+
+/* Adds active buttons */
+ protected override function onAfterAddDefaultButtons(toolbarService:ABarService):void{
+
+           btnSubmit= new Button();
+	   btnSubmit.label = "Submit";
+	   toolbarService.addButton(btnSubmit, "Submit", "Submit", 5);
+
+  }
+
+            		]]>
+	</mx:Script>
+
+    <williams:NavigationPanel id="baRequestEditNavPanel"
+                              creationPolicy="all"
+    creationComplete="{baRequestEditNavPanel.contentSubPanel.autoLayout=true}" >
+    <module:BARequestEditCompany id="baRqstEditCompany" service = "{service}" companyInfo="{companyInfo}" label="Company"
+				 creationPolicy="all" width="100%" height="100%" disabledOverlayAlpha="0" disabledColor="#000000"/>
+    <module:BARequestEditAddress id="baRqstEditAddress" service = "{service}" companyInfo="{companyInfo}" label="Address"
+				 creationPolicy="all" width="100%" height="100%" disabledOverlayAlpha="0" disabledColor="#000000"/>
+     </williams:NavigationPanel>
+</williams:PopupPanel>

@@ -1,0 +1,14 @@
+******************************************************
+A preview of the web module I built over my internship
+******************************************************
+
+Files:
+
+BAPopup.mxml	      # A dynamically generated view of new customer requests
+Infrastructure.xml    # Database interfacing 
+InfrastructureDAO.java# Function calls mapped to database queries   
+
+# Summary of technologies
+BAPopup.mxml	      # Flex
+Infrastructure.xml    # Ibatis and Sybase
+InfrastructureDAO.java# Java

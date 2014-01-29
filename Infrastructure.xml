@@ -1,0 +1,158 @@
+<sqlMap namespace="infrastructureBiz">
+
+
+  <select id="retrieveBARequestUserInfoList"
+          parameterClass="com.williams.infrastructureBiz.entities.BARequestPO"
+          resultClass="com.williams.infrastructureBiz.entities.BARequestUserInfoDO" >
+
+      select request_id              as requestId,
+             rqst_user_id            as userId,
+             rqst_id_fname           as firstName,
+             rqst_id_lname           as lastName,
+             rqst_id_title           as title,
+             rqst_id_phone           as phoneNumber,
+             rqst_id_24_hour_phone   as phoneNumber24Hour,
+             rqst_id_email           as email,
+             rqst_id_sec_coord       as securityCoordinator,
+             rqst_id_ctrct_sign_auth as contractSignatureAuthority,
+             rqst_id_ofo_contact     as ofoContact,
+             rqst_id_bump            as intradayBumpContact,
+             rqst_id_recall          as recallContact,
+             rqst_id_crit_notice     as criticalNoticeContact,
+             processed_flag          as processedFlag
+         from ba_rqst_user_info
+       where request_id = #requestId#
+   </select>
+
+   <resultMap id="userMapSaved"
+        class="com.williams.infrastructureBiz.entities.BARequestUserInfoDO">
+        <result property="requestId" column="rqst_id"/>
+        <result property="userId" column="usr_id"/>
+        <result property="firstName" column="user_first_name"/>
+        <result property="lastName" column="user_last_name"/>
+        <result property="middleInit" column="user_mid_init"/>
+        <result property="title" column="user_ttl"/>
+        <result property="phoneNumber" column="offc_ph_nbr"/>
+        <result property="phoneNumber24Hour" column="aft_hr_ph_nbr"/>
+        <result property="email" column="email_addr"/>
+        <result property="securityCoordinator" column="rqst_id_sec_coord"/>
+        <result property="contractSignatureAuthority" column="rqst_id_ctrct_sign_auth"/>
+        <result property="ofoContact" column="rqst_id_ofo_contact"/>
+        <result property="intradayBumpContact" column="rqst_id_bump"/>
+        <result property="recallContact" column="rqst_id_recall"/>
+        <result property="criticalNoticeContact" column="rqst_id_crit_notice"/>
+
+   </resultMap>
+
+
+   <select id="infrastructureBiz.retrieveBARequestUserInfoListSaved" parameterClass="com.williams.infrastructureBiz.entities.BARequestPO"
+        resultMap="userMapSaved">
+        select *
+        from sys_usr_ba_rqst_edit
+       where rqst_id = #requestId#
+   </select>
+
+
+  <update id="updateBARequestProcessedFlag"
+          parameterClass="com.williams.infrastructureBiz.entities.BARequestProcessedFlagPO" >
+    update ba_rqst_company_info
+       set processed_flag = #processedFlag#
+     where request_id = #requestId#
+
+    update ba_rqst_user_info
+       set processed_flag = #processedFlag#
+     where request_id = #requestId#
+  </update>
+
+    <select id="infrastructureBiz.getBusType" resultClass="java.lang.String" >
+        select cd_value from dbo.sys_cd_prim_bus_type
+    </select>
+
+
+    <insert id = "infrastructureBiz.saveBARequestEditCompany" parameterClass="com.williams.infrastructureBiz.entities.BARequestCompanyInfoDO">
+       insert into company_ba_rqst_edit
+       (rqst_id, ba_rqst_stat_desc, co_acro_name, co_comn_name, co_legal_name, pin_abbr_co_name, cmt, ferc_co_id, fed_txpyr_id,
+        co_stat, co_stat_date, parnt_co_id, mdcn_affil_co_ind, dunn_brdst_nbr, prod_purch_nbr, edi_btch_none_flg, gisb_ver,
+        send_to_nwp_first_flag, prim_bus_type_cd, requester_name, addr_1, addr_2,city, abbr_st, st_inc, zip, ctry_name, url, notice_addr_1,
+        notice_addr_2, notice_city, notice_abbr_st, notice_zip, notice_ctry_name, notice_attn, notice_email, invoice_addr_1, invoice_addr_2, invoice_city, invoice_abbr_st,
+        invoice_zip, invoice_ctry_name, invoice_attn, invoice_email, mkt_mgr_user_id, mkt_rep_user_id, backup_mkt_rep_user_id, date_modified, phone_nbr, fax_nbr,
+        eff_start_date, eff_end_date)
+
+        values
+        (#rqstId#, 'Pending', #acroName#, #companyName#, #legalName#, #pinAbbrCOName#, #comments#, #fercCOId#, #federalTaxIdNumber#,
+         #status#, getDate(), #coParentId#, #affiliateIndicator#, #dunnNbr#, #productPurchaseNbr#, #nom#, #gisbVersion#,
+         #sendToNWPFirstFlag#, #primBusTypeString#, #requesterName#, #companyAddress1#, #companyAddress2#, #companyCity#, #companyState#,
+         #stInc#, #companyZipCode#, #companyCountry#, #companyURL#, #noticeToAddress1#, #noticeToAddress2#, #noticeToCity#, #noticeToState#, #noticeToZipCode#,
+         #noticeToCountry#, #noticeToAttention#, #noticeToEmail#, #invoiceToAddress1#, #invoiceToAddress2#, #invoiceToCity#, #invoiceToState#, #invoiceToZipCode#, #invoiceToCountry#,
+         #invoiceToAttention#, #invoiceToEmail#, #manager#, #rep#, #backUpRep#, getDate(), #companyPhoneNumber#, #companyFaxNumber#,
+         #effStartDate#, #effEndDate#)
+
+    </insert>
+
+    <insert id = "infrastructureBiz.saveBARequestEditUsers" parameterClass="com.williams.infrastructureBiz.entities.BARequestUserInfoDO">
+       insert into sys_usr_ba_rqst_edit
+       (rqst_id, usr_id, user_first_name, user_last_name, user_mid_init, user_logon_id, user_ttl, offc_ph_nbr, aft_hr_ph_nbr, email_addr,
+       rqst_id_sec_coord, rqst_id_ctrct_sign_auth, rqst_id_ofo_contact, rqst_id_bump, rqst_id_recall, rqst_id_crit_notice)
+
+       values
+       (#rqstId#, #userIdToInt#, #firstName#, #lastName#, #middleInit#, #logonId#, #title#, #phoneNumber#, #phoneNumber24Hour#, #email#,
+       #securityCoordinator#, #contractSignatureAuthority#, #ofoContact#, #intradayBumpContact#, #recallContact#, #criticalNoticeContact#)
+    </insert>
+
+    <delete id = "infrastructureBiz.deleteBARequestEditUsers" parameterClass="com.williams.infrastructureBiz.entities.BARequestUserInfoDO">
+       if exists (select usr_id from sys_usr_ba_rqst_edit where usr_id = #userIdToInt# and rqst_id = #rqstId#)
+       delete from sys_usr_ba_rqst_edit where usr_id = #userIdToInt# and rqst_id = #rqstId#
+    </delete>
+
+    <delete id = "infrastructureBiz.deleteBARequestEditCompany" parameterClass="com.williams.infrastructureBiz.entities.BARequestCompanyInfoDO">
+        if exists (select rqst_id from company_ba_rqst_edit where rqst_id = #rqstId#)
+       delete from company_ba_rqst_edit where rqst_id = #rqstId#
+    </delete>
+
+    <resultMap id="userMap"
+        class="com.williams.lookups.entities.UserDO">
+        <result property="loginId" column="user_logon_id"/>
+        <result property="coId" column="co_id"/>
+        <result property="status" column="logon_susp_ind"/>
+        <result property="firstName" column="user_first_name"/>
+        <result property="lastName" column="user_last_name"/>
+    </resultMap>
+
+    <select id="infrastructureBiz.selectUser" parameterClass="com.williams.lookups.entities.UserDO"
+        resultMap="userMap">
+        select
+             u.user_logon_id,
+             u.co_id,
+             u.logon_susp_ind,
+             u.user_first_name,
+             u.user_last_name
+        from sys_user u
+        where u.user_logon_id = #loginId#
+    </select>
+
+    <resultMap id="userMap2"
+        class="com.williams.lookups.entities.UserDO">
+        <result property="loginId" column="user_logon_id"/>
+        <result property="coId" column="co_id"/>
+        <result property="status" column="logon_susp_ind"/>
+        <result property="firstName" column="user_first_name"/>
+        <result property="lastName" column="user_last_name"/>
+    </resultMap>
+
+     <select id="infrastructureBiz.selectUserBARqst" parameterClass="com.williams.lookups.entities.UserDO"
+        resultMap="userMap2">
+        select
+             r.user_logon_id,
+             r.co_id,
+             r.logon_susp_ind,
+             r.user_first_name,
+             r.user_last_name
+        from sys_user_rqst r
+        where r.user_logon_id = #loginId#
+    </select>
+
+    <update id = "infrastructureBiz.submitBaRequestEdit" parameterClass="com.williams.infrastructureBiz.entities.BARequestCompanyInfoDO">
+        update company_ba_rqst_edit set ba_rqst_stat_desc = 'Submitted' where rqst_id = #rqstId#
+    </update>
+
+</sqlMap>
